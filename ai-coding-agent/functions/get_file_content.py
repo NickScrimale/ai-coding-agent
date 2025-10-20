@@ -9,6 +9,7 @@ def get_file_content(working_directory, file_path):
         return f'Error: "{file_path}" is not in the working dir'
     if not os.path.isfile(abs_file_path):
         return f'Error: File not found or is not a regular file: "{file_path}"'
+        
     file_content_string = ""
     try:
         with open(abs_file_path, "r") as f:
