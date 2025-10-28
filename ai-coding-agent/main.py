@@ -25,6 +25,8 @@ def main():
     - Write to a file (create or update)
     - Run a Python file with optional arguments
 
+    When the user asks about the code project - they are referring to the working directory. So, you should typically start by looking at the project's files, and figuring out how to run the project and how to run its tests, you'll always want to test the tests and the actual project to verify that behavior is working.
+     
     All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
     """
 
@@ -57,27 +59,38 @@ def main():
         verbose_flag = True
     prompt = sys.argv[1]
 
-    response = client.models.generate_content(
-        model='gemini-2.0-flash-001',
-        contents=messages,
-        config=config,
-    )
+    max_iters = 20
+    for i in range(0, max_iters):
 
-    if response is None or response.usage_metadata is None:
-        print("response is malformed")
-        return
-    if verbose_flag:
-        print(f"User prompt: {prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-001',
+            contents=messages,
+            config=config,
+        )
+
+        if response is None or response.usage_metadata is None:
+            print("response is malformed")
+            return
+        if verbose_flag:
+            print(f"User prompt: {prompt}")
+            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
 
-    if response.function_calls:
-        for function_call_part in response.function_calls:
-            result = call_function(function_call_part, verbose_flag)
-            print(result)
-    else:
-        print(response.text)
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate is None or candidate.content is None:
+                    continue
+                messages.append(candidate.content)
+
+        if response.function_calls:
+            for function_call_part in response.function_calls:
+                result = call_function(function_call_part, verbose_flag)
+                messages.append(result)
+
+        else:
+            print(response.text)
+            return
 
 
 
